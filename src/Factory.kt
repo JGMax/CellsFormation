@@ -211,8 +211,9 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
                 globalMinimum.rawClusters, globalMinimum.columnClusters)
         }
         for(i in 0..iterationsCount) {
-            println("Global effectiveness: ${globalMinimum.effectiveness}")
+            println("$i Global effectiveness: ${globalMinimum.effectiveness} Clusters: ${globalMinimum.numOfClusters}")
 
+            localMinimum = globalMinimum.copy()
             merge(
                 Random.nextInt(1, localMinimum.numOfClusters + 1),
                 Random.nextInt(1, localMinimum.numOfClusters + 1)
@@ -228,7 +229,7 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
                     globalMinimum.rawClusters, globalMinimum.columnClusters)
                 continue
             }
-
+            localMinimum = globalMinimum.copy()
             split(Random.nextInt(1, localMinimum.numOfClusters + 1))
 
             currentDistribution = localMinimum.copy()

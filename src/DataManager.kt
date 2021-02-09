@@ -15,7 +15,7 @@ class DataManager {
                 val nums = line.split(" ")
 
                 for (j in nums.indices) {
-                    if (j != 0) {
+                    if (j != 0 && nums[j].isNotEmpty()) {
                         matrix!![nums[0].toInt() - 1][nums[j].toInt() - 1] = 1.toByte()
                     }
                 }
