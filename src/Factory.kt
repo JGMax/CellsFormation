@@ -178,26 +178,32 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
     private fun variableNeighborhoodDescent(): Double {
         var fullProfit = 0.0
         do {
-            var profit = bestSwap(currentDistribution.rawClusters)
-            if (profit > 0.0) {
-                fullProfit += profit
-                continue
-            }
-            profit = bestSwap(currentDistribution.columnClusters)
-            if (profit > 0.0) {
-                fullProfit += profit
-                continue
-            }
+            var profit : Double
+
             profit = bestRaiseRaw()
             if (profit > 0.0) {
                 fullProfit += profit
                 continue
             }
+
+            profit = bestSwap(currentDistribution.rawClusters)
+            if (profit > 0.0) {
+                fullProfit += profit
+                continue
+            }
+
             profit = bestRaiseColumn()
             if (profit > 0.0) {
                 fullProfit += profit
                 continue
             }
+
+            profit = bestSwap(currentDistribution.columnClusters)
+            if (profit > 0.0) {
+                fullProfit += profit
+                continue
+            }
+
             break
         } while (true)
         return fullProfit
