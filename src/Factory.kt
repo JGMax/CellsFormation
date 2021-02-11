@@ -1,3 +1,4 @@
+
 import kotlin.math.min
 import kotlin.math.max
 import kotlin.random.Random
@@ -79,10 +80,9 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
         for (i in currentDistribution.rawClusters.indices) {
             for (cluster in 1..currentDistribution.numOfClusters) {
                 if (raiseRaw(i, cluster)) {
-                    if (currentDistribution.effectiveness > localMinimum.effectiveness) {
+                    if (currentDistribution.effectiveness - localMinimum.effectiveness > profit) {
                         profit = currentDistribution.effectiveness - localMinimum.effectiveness
                         localMinimum = currentDistribution.copy()
-                        return profit
                     }
                 } else {
                     break
@@ -98,10 +98,9 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
         for (i in currentDistribution.columnClusters.indices) {
             for (cluster in 1..currentDistribution.numOfClusters) {
                 if (raiseColumn(i, cluster)) {
-                    if (currentDistribution.effectiveness > localMinimum.effectiveness) {
+                    if (currentDistribution.effectiveness - localMinimum.effectiveness > profit) {
                         profit = currentDistribution.effectiveness - localMinimum.effectiveness
                         localMinimum = currentDistribution.copy()
-                        return profit
                     }
                 } else {
                     break
@@ -112,7 +111,7 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
         return profit
     }
 
-    private fun merge(clusterNum1: Int, clusterNum2: Int) {
+    private fun merge(clusterNum1: Int, clusterNum2: Int): Boolean {
         val thisTry = localMinimum.copy()
         if (
             merge(thisTry.columnClusters, clusterNum1, clusterNum2) &&
@@ -121,7 +120,9 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
             thisTry.numOfClusters--
             thisTry.calculateEffectiveness()
             localMinimum = thisTry
+            return true
         }
+        return false
     }
 
     private fun merge(data: Array<Int>, clusterNum1: Int, clusterNum2: Int): Boolean {
@@ -141,7 +142,7 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
         return false
     }
 
-    private fun split(clusterNum: Int) {
+    private fun split(clusterNum: Int): Boolean {
         val thisTry = localMinimum.copy()
         if (
             split(thisTry.rawClusters, clusterNum) &&
@@ -150,12 +151,14 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
             thisTry.numOfClusters++
             thisTry.calculateEffectiveness()
             localMinimum = thisTry
+            return true
         }
+        return false
     }
 
     private fun split(data: Array<Int>, clusterNum: Int): Boolean {
         if (clusterNum in data) {
-            var count = data.count() { it == clusterNum }
+            var count = data.count { it == clusterNum }
             count /= 2
             if (count < 1) {
                 return false
@@ -177,17 +180,97 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
 
     private fun variableNeighborhoodDescent(): Double {
         var fullProfit = 0.0
-        do {
-            var profit : Double
+        loop@ do {
+            var profit: Double
+            currentDistribution = localMinimum.copy()
 
-            profit = bestRaiseRaw()
+            val seq = arrayOf(1, 2, 3, 4)
+            seq.shuffle()
+
+            for (i in seq) {
+                when (i) {
+                    1 -> {
+                        /*profit = if (raiseRaw(
+                                Random.nextInt(0, currentDistribution.rawClusters.size),
+                                Random.nextInt(1, currentDistribution.numOfClusters + 1)
+                            )
+                        ) {
+                            currentDistribution.effectiveness - localMinimum.effectiveness
+                        } else {
+                            0.0
+                        }*/
+                        profit = bestRaiseRaw()
+                        if (profit > 0.0) {
+                            localMinimum = currentDistribution.copy()
+                            fullProfit += profit
+                            break
+                        }
+                    }
+                    2 -> {
+                        swap(
+                            currentDistribution.rawClusters,
+                            Random.nextInt(0, currentDistribution.rawClusters.size),
+                            Random.nextInt(0, currentDistribution.rawClusters.size)
+                        )
+                        profit = currentDistribution.effectiveness - localMinimum.effectiveness
+                        //profit = bestSwap(currentDistribution.rawClusters)
+                        if (profit > 0.0) {
+                            localMinimum = currentDistribution.copy()
+                            fullProfit += profit
+                            break
+                        }
+                    }
+                    3 -> {
+                        /*profit = if (raiseColumn(
+                                Random.nextInt(0, currentDistribution.columnClusters.size),
+                                Random.nextInt(1, currentDistribution.numOfClusters + 1)
+                            )
+                        ) {
+                            currentDistribution.effectiveness - localMinimum.effectiveness
+                        } else {
+                            0.0
+                        }*/
+                        profit = bestRaiseColumn()
+                        if (profit > 0.0) {
+                            localMinimum = currentDistribution.copy()
+                            fullProfit += profit
+                            break
+                        }
+                    }
+                    4 -> {
+                        swap(
+                            currentDistribution.columnClusters,
+                            Random.nextInt(0, currentDistribution.columnClusters.size),
+                            Random.nextInt(0, currentDistribution.columnClusters.size)
+                        )
+                        profit = currentDistribution.effectiveness - localMinimum.effectiveness
+                        //profit = bestSwap(currentDistribution.columnClusters)
+                        if (profit > 0.0) {
+                            localMinimum = currentDistribution.copy()
+                            fullProfit += profit
+                            break
+                        }
+                    }
+                }
+                if (i == seq.last()) {
+                    break@loop
+                }
+            }
+
+            /*profit = bestRaiseRaw()
             if (profit > 0.0) {
                 fullProfit += profit
                 continue
             }
 
-            profit = bestSwap(currentDistribution.rawClusters)
+            swap(
+                currentDistribution.rawClusters,
+                Random.nextInt(0, currentDistribution.rawClusters.size),
+                Random.nextInt(0, currentDistribution.rawClusters.size)
+            )
+            profit = currentDistribution.effectiveness - localMinimum.effectiveness
             if (profit > 0.0) {
+                localMinimum = currentDistribution.copy()
                 fullProfit += profit
                 continue
             }
@@ -198,57 +281,100 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
                 continue
             }
 
-            profit = bestSwap(currentDistribution.columnClusters)
+            swap(
+                currentDistribution.columnClusters,
+                Random.nextInt(0, currentDistribution.columnClusters.size),
+                Random.nextInt(0, currentDistribution.columnClusters.size)
+            )
+            profit = currentDistribution.effectiveness - localMinimum.effectiveness
             if (profit > 0.0) {
+                localMinimum = currentDistribution.copy()
                 fullProfit += profit
                 continue
             }
 
-            break
+            break*/
         } while (true)
         return fullProfit
     }
 
-    fun generalVNS(iterationsCount: Int = 15000) {
+    fun generalVNS(iterationsCount: Int = 1000) {
         if (variableNeighborhoodDescent() > 0.0) {
             globalMinimum = localMinimum.copy()
             currentDistribution = globalMinimum.copy()
-            DataManager().writeDataToFile("BestAnswer.txt",
-                globalMinimum.rawClusters, globalMinimum.columnClusters)
+            DataManager().writeDataToFile(
+                "BestAnswer.txt",
+                globalMinimum.rawClusters, globalMinimum.columnClusters
+            )
         }
-        for(i in 0..iterationsCount) {
+        loop@for (i in 0..iterationsCount) {
             println("$i Global effectiveness: ${globalMinimum.effectiveness} Clusters: ${globalMinimum.numOfClusters}")
 
             localMinimum = globalMinimum.copy()
-            merge(
-                Random.nextInt(1, localMinimum.numOfClusters + 1),
-                Random.nextInt(1, localMinimum.numOfClusters + 1)
-            )
+
+            if (Random.nextBoolean()) {
+                merge(
+                    Random.nextInt(1, localMinimum.numOfClusters + 1),
+                    Random.nextInt(1, localMinimum.numOfClusters + 1)
+                )
+            } else {
+                /*do {
+                    val clusterForSplit = getClustersForSplit()
+                    if (clusterForSplit.isEmpty()) {
+                        merge(
+                            Random.nextInt(1, localMinimum.numOfClusters + 1),
+                            Random.nextInt(1, localMinimum.numOfClusters + 1)
+                        )
+                    } else {
+                        split(
+                            clusterForSplit[Random.nextInt(clusterForSplit.size)]
+                        )
+                    }
+                } while(clusterForSplit.isNotEmpty())*/
+                val clusters = getClustersForSplit()
+                if (clusters.isEmpty()) {
+                    continue@loop
+                }
+                split(
+                    clusters[Random.nextInt(clusters.size)]
+                )
+            }
+
             currentDistribution = localMinimum.copy()
 
-            if (variableNeighborhoodDescent() > 0.0
-                && globalMinimum.effectiveness < localMinimum.effectiveness) {
-                globalMinimum = localMinimum.copy()
-                currentDistribution = globalMinimum.copy()
-                println("!!!Improve!!!")
-                DataManager().writeDataToFile("BestAnswer.txt",
-                    globalMinimum.rawClusters, globalMinimum.columnClusters)
+            if (checkGlobalAnswer()) {
                 continue
             }
-            localMinimum = globalMinimum.copy()
-            split(Random.nextInt(1, localMinimum.numOfClusters + 1))
 
-            currentDistribution = localMinimum.copy()
-            if (variableNeighborhoodDescent() > 0.0
-                && globalMinimum.effectiveness < localMinimum.effectiveness) {
-                globalMinimum = localMinimum.copy()
-                currentDistribution = globalMinimum.copy()
-                println("!!!Improve!!!")
-                DataManager().writeDataToFile("BestAnswer.txt",
-                    globalMinimum.rawClusters, globalMinimum.columnClusters)
-                continue
-            }
         }
+    }
+
+    private fun checkGlobalAnswer(): Boolean {
+        if (variableNeighborhoodDescent() > 0.0
+            && globalMinimum.effectiveness < localMinimum.effectiveness
+        ) {
+            globalMinimum = localMinimum.copy()
+            currentDistribution = globalMinimum.copy()
+            println("!!!Improve!!!")
+            DataManager().writeDataToFile(
+                "BestAnswer.txt",
+                globalMinimum.rawClusters, globalMinimum.columnClusters
+            )
+            return true
+        }
+        return false
+    }
+
+    private fun getClustersForSplit(): List<Int> {
+        val rawForSplit = localMinimum.rawClusters
+            .groupingBy { it }
+            .eachCount()
+            .filter { it.value > 1 }.keys
+        val columnForSplit = localMinimum.columnClusters
+            .groupingBy { it }
+            .eachCount()
+            .filter { it.value > 1 }.keys
+        return rawForSplit.filter { columnForSplit.contains(it) }
     }
 
     fun getCurrentEffectiveness() = currentDistribution.effectiveness
@@ -304,5 +430,4 @@ class Factory(private val matrix: Array<Array<Byte>>, numOfClusters: Int = 1) {
             println()
         }
     }
-
 }

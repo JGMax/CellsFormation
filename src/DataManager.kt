@@ -1,7 +1,7 @@
 import java.io.File
 
 class DataManager {
-    var matrix: Array<Array<Byte>>? = null
+    private var matrix: Array<Array<Byte>>? = null
 
     fun readDataFromFile(fileName: String): Array<Array<Byte>> {
         val lines = File(fileName).readLines()
